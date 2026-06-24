@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,16 @@ router = APIRouter(prefix="/links", tags=["links"])
 def create_link(body: schemas.LinkCreate, db: Session = Depends(get_db)) -> schemas.LinkResponse:
     link = crud.create_link(db, str(body.url))
     return link
+
+
+@router.get("", response_model=schemas.LinkList)
+def list_links(
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+) -> schemas.LinkList:
+    items, total = crud.list_links(db, limit, offset)
+    return schemas.LinkList(items=items, total=total)
 
 
 @router.get("/{code}/stats", response_model=schemas.LinkStats)

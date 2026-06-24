@@ -24,3 +24,9 @@ def get_link_by_code(db: Session, code: str) -> Link | None:
 def increment_click_count(db: Session, link: Link) -> None:
     link.click_count += 1
     db.commit()
+
+
+def list_links(db: Session, limit: int, offset: int) -> tuple[list[Link], int]:
+    total = db.query(Link).count()
+    items = db.query(Link).order_by(Link.created_at.desc()).offset(offset).limit(limit).all()
+    return items, total
