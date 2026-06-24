@@ -149,3 +149,44 @@ def test_list_links_pagination():
     data = response.json()
     assert len(data["items"]) == 1
     assert data["total"] == 5
+
+
+def test_export_links_csv():
+    # Create two links
+    client.post("/links", json={"url": "https://example.com/one"})
+    client.post("/links", json={"url": "https://example.com/two"})
+
+    # Fetch to get codes
+    list_resp = client.get("/links")
+    items = list_resp.json()["items"]
+    assert len(items) == 2
+    
+    # Redirect to one of them to increment click count
+    code_newest = items[0]["short_code"]
+    client.get(f"/{code_newest}", follow_redirects=False)
+
+    # Call export endpoint
+    response = client.get("/links/export")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    assert "attachment; filename=\"link_stats.csv\"" in response.headers["content-disposition"]
+
+    # Parse CSV contents
+    import csv
+    import io
+    reader = csv.reader(io.StringIO(response.text))
+    rows = list(reader)
+
+    assert len(rows) == 3
+    assert rows[0] == ["Short Code", "Original URL", "Created At", "Click Count"]
+    
+    # Row 1 is the newest link, click count should be 1
+    assert rows[1][0] == code_newest
+    assert rows[1][1] == "https://example.com/two"
+    assert rows[1][3] == "1"
+
+    # Row 2 is the first link, click count should be 0
+    assert rows[2][0] == items[1]["short_code"]
+    assert rows[2][1] == "https://example.com/one"
+    assert rows[2][3] == "0"
+

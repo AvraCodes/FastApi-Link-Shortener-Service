@@ -1,5 +1,8 @@
+import csv
+import io
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 from sqlalchemy.orm import Session
 
 from app import crud, schemas
@@ -22,6 +25,32 @@ def list_links(
 ) -> schemas.LinkList:
     items, total = crud.list_links(db, limit, offset)
     return schemas.LinkList(items=items, total=total)
+
+
+@router.get("/export")
+def export_links_csv(db: Session = Depends(get_db)) -> StreamingResponse:
+    def iter_csv():
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["Short Code", "Original URL", "Created At", "Click Count"])
+        yield output.getvalue()
+        output.seek(0)
+        output.truncate(0)
+
+        links = crud.get_all_links(db)
+        for link in links:
+            writer.writerow([
+                link.short_code,
+                link.original_url,
+                link.created_at.isoformat(),
+                link.click_count,
+            ])
+            yield output.getvalue()
+            output.seek(0)
+            output.truncate(0)
+
+    headers = {"Content-Disposition": 'attachment; filename="link_stats.csv"'}
+    return StreamingResponse(iter_csv(), media_type="text/csv", headers=headers)
 
 
 @router.get("/{code}/stats", response_model=schemas.LinkStats)

@@ -30,3 +30,8 @@ def list_links(db: Session, limit: int, offset: int) -> tuple[list[Link], int]:
     total = db.query(Link).count()
     items = db.query(Link).order_by(Link.created_at.desc()).offset(offset).limit(limit).all()
     return items, total
+
+
+def get_all_links(db: Session) -> list[Link]:
+    return db.query(Link).order_by(Link.created_at.desc()).all()
+
