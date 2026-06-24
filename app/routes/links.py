@@ -14,6 +14,14 @@ def create_link(body: schemas.LinkCreate, db: Session = Depends(get_db)) -> sche
     return link
 
 
+@router.get("/{code}/stats", response_model=schemas.LinkStats)
+def get_link_stats(code: str, db: Session = Depends(get_db)) -> schemas.LinkStats:
+    link = crud.get_link_by_code(db, code)
+    if not link:
+        raise HTTPException(status_code=404, detail="Short link not found")
+    return link
+
+
 def redirect_to_url(code: str, db: Session = Depends(get_db)) -> RedirectResponse:
     """Registered on the main app (not this router) to live at /{code}."""
     link = crud.get_link_by_code(db, code)
