@@ -92,6 +92,23 @@ Response (200):
 }
 ```
 
+### Export stats as CSV
+
+```bash
+curl -o stats.csv http://localhost:8000/links/export
+```
+
+Downloads a CSV file with columns `Short Code`, `Original URL`, `Created At`, `Click Count` for every link in the database, ordered newest first.
+
+## Web UI
+
+A lightweight single-page interface is served at `http://localhost:8000`. It lets you:
+- Shorten a URL and copy the result.
+- Browse recent links (5 per page, paginated).
+- View per-link click stats.
+- Download all stats as a CSV file.
+
+
 ## Decisions
 
 **Base62 random codes over auto-increment IDs.** Auto-increment IDs are sequential and
