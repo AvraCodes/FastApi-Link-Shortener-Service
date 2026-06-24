@@ -15,3 +15,12 @@ def create_link(db: Session, original_url: str) -> Link:
     db.commit()
     db.refresh(link)
     return link
+
+
+def get_link_by_code(db: Session, code: str) -> Link | None:
+    return db.query(Link).filter(Link.short_code == code).first()
+
+
+def increment_click_count(db: Session, link: Link) -> None:
+    link.click_count += 1
+    db.commit()
