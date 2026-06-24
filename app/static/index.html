@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Link Shortener</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --border: #e2e8f0;
+      --success-bg: #f0fdf4;
+      --success-border: #bbf7d0;
+      --success-text: #15803d;
+      --error-bg: #fef2f2;
+      --error-border: #fecaca;
+      --error-text: #b91c1c;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background: var(--bg); 
+      color: var(--text-main); 
+      padding: 40px 20px; 
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 768px;
+      margin: 0 auto;
+    }
+
+    .header {
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    .card { 
+      background: var(--card-bg); 
+      border: 1px solid var(--border); 
+      border-radius: var(--radius); 
+      padding: 32px; 
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.2s;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-md);
+    }
+
+    label { 
+      display: block; 
+      font-size: 0.875rem; 
+      font-weight: 500; 
+      margin-bottom: 8px; 
+      color: var(--text-main); 
+    }
+
+    .input-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    input[type="url"] { 
+      flex: 1;
+      padding: 12px 16px; 
+      border: 1px solid var(--border); 
+      border-radius: 8px; 
+      font-size: 1rem; 
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="url"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    button { 
+      padding: 12px 24px; 
+      background: var(--primary); 
+      color: white; 
+      border: none; 
+      border-radius: 8px; 
+      font-size: 1rem; 
+      font-weight: 500;
+      cursor: pointer; 
+      font-family: inherit;
+      transition: background-color 0.2s;
+    }
+
+    button:hover { 
+      background: var(--primary-hover); 
+    }
+
+    .alert {
+      margin-top: 16px; 
+      padding: 16px; 
+      border-radius: 8px; 
+      display: none; 
+      font-size: 0.95rem;
+    }
+
+    .alert-success {
+      background: var(--success-bg); 
+      border: 1px solid var(--success-border); 
+      color: var(--success-text);
+    }
+
+    .alert-error {
+      background: var(--error-bg); 
+      border: 1px solid var(--error-border); 
+      color: var(--error-text);
+    }
+
+    .short-link-result {
+      font-size: 1.125rem;
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px;
+      color: var(--primary);
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .short-link-result:hover {
+      text-decoration: underline;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .section-header h2 { 
+      font-size: 1.25rem; 
+      font-weight: 600; 
+    }
+
+    .refresh-btn { 
+      background: transparent;
+      color: var(--text-muted);
+      padding: 6px 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .refresh-btn:hover {
+      background: var(--bg);
+      color: var(--text-main);
+    }
+
+    .pagination-btn {
+      background: transparent;
+      color: var(--text-main);
+      padding: 6px 12px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: var(--bg);
+    }
+
+    .pagination-btn:disabled {
+      color: var(--text-muted);
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      font-size: 0.95rem; 
+    }
+
+    th { 
+      text-align: left; 
+      padding: 12px 16px; 
+      border-bottom: 2px solid var(--border); 
+      color: var(--text-muted); 
+      font-weight: 500; 
+    }
+
+    td { 
+      padding: 16px; 
+      border-bottom: 1px solid var(--border); 
+      vertical-align: middle; 
+    }
+
+    .td-code { font-weight: 600; }
+    .td-code a { color: var(--text-main); text-decoration: none; }
+    .td-code a:hover { color: var(--primary); }
+
+    .td-url { 
+      max-width: 300px;
+    }
+    
+    .truncate {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    .truncate:hover {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+
+    .action-link { 
+      color: var(--primary); 
+      text-decoration: none; 
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .action-link:hover { text-decoration: underline; }
+
+    .empty-state { 
+      text-align: center;
+      color: var(--text-muted); 
+      padding: 40px 0; 
+    }
+
+    .stats-view {
+      display: none;
+    }
+    
+    .main-view {
+      display: block;
+    }
+
+    .stats-hero {
+      text-align: center;
+      padding: 40px 0;
+    }
+
+    .stats-number {
+      font-size: 4rem;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    
+    .stats-label {
+      font-size: 1.125rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .stats-details {
+      margin-top: 32px;
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+    }
+
+    .detail-row {
+      display: flex;
+      margin-bottom: 12px;
+    }
+    
+    .detail-label {
+      width: 120px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    
+    .detail-value a {
+      color: var(--primary);
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .detail-value a:hover {
+      text-decoration: underline;
+    }
+    
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      margin-bottom: 24px;
+      cursor: pointer;
+    }
+    .back-btn:hover {
+      color: var(--text-main);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 onclick="showMainView()">Link Shortener</h1>
+    </div>
+
+    <!-- Main View -->
+    <div id="main-view" class="main-view">
+      <div class="card">
+        <label for="url-input">Paste a URL to shorten</label>
+        <div class="input-group">
+          <input type="url" id="url-input" placeholder="https://example.com/some/long/url" required>
+          <button onclick="shorten()">Shorten</button>
+        </div>
+        
+        <div id="error" class="alert alert-error"></div>
+        <div id="result" class="alert alert-success">
+          <a id="short-link" class="short-link-result" href="#" target="_blank"></a>
+          <div style="font-size: 0.875rem; color: var(--success-text); opacity: 0.9; margin-top: 4px;">
+            <span id="copy-hint"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-header">
+          <h2>Recent Links</h2>
+          <div style="display: flex; gap: 8px;">
+            <button class="refresh-btn" onclick="exportCSV()">Export CSV</button>
+            <button class="refresh-btn" onclick="loadLinks()">Refresh</button>
+          </div>
+        </div>
+        <div class="table-container" id="links-table">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats View -->
+    <div id="stats-view" class="stats-view">
+      <a class="back-btn" onclick="showMainView()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Back to links
+      </a>
+      
+      <div class="card">
+        <div id="stats-error" class="alert alert-error" style="display: none;"></div>
+        <div id="stats-content">
+          <div class="section-header">
+            <h2>Link Analytics</h2>
+            <button class="refresh-btn" onclick="refreshStats()">Refresh</button>
+          </div>
+          
+          <div class="stats-hero">
+            <div class="stats-number" id="stats-clicks">-</div>
+            <div class="stats-label">Total Clicks</div>
+          </div>
+          
+          <div class="stats-details">
+            <div class="detail-row">
+              <div class="detail-label">Short Link</div>
+              <div class="detail-value"><a id="stats-short" href="#" target="_blank"></a></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Original URL</div>
+              <div class="detail-value"><a id="stats-original" href="#" target="_blank"></a></div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-label">Created</div>
+              <div class="detail-value" id="stats-date"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentStatsCode = null;
+    let currentPage = 1;
+    const limit = 5;
+    let totalItems = 0;
+
+    function showMainView() {
+      document.getElementById('main-view').style.display = 'block';
+      document.getElementById('stats-view').style.display = 'none';
+      history.pushState({}, '', '/');
+      loadLinks();
+    }
+
+    function showStatsView(code) {
+      currentStatsCode = code;
+      document.getElementById('main-view').style.display = 'none';
+      document.getElementById('stats-view').style.display = 'block';
+      history.pushState({}, '', '/?stats=' + code);
+      loadStats(code);
+    }
+
+    function handleRouting() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const statsCode = urlParams.get('stats');
+      if (statsCode) {
+        showStatsView(statsCode);
+      } else {
+        showMainView();
+      }
+    }
+
+    window.addEventListener('popstate', handleRouting);
+
+    async function shorten() {
+      const urlInput = document.getElementById('url-input');
+      const url = urlInput.value.trim();
+      const resultEl = document.getElementById('result');
+      const errorEl = document.getElementById('error');
+      
+      resultEl.style.display = 'none';
+      errorEl.style.display = 'none';
+
+      if (!url) {
+        errorEl.textContent = 'Please enter a URL.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      try {
+        const res = await fetch('/links', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        if (!res.ok) {
+          errorEl.textContent = res.status === 422 
+            ? 'Invalid URL. Please ensure it starts with http:// or https://' 
+            : 'Something went wrong. Please try again.';
+          errorEl.style.display = 'block';
+          return;
+        }
+
+        const data = await res.json();
+        const shortUrl = `${location.origin}/${data.short_code}`;
+        const linkEl = document.getElementById('short-link');
+        
+        linkEl.href = shortUrl;
+        linkEl.textContent = shortUrl;
+        
+        const dateStr = new Date(data.created_at).toLocaleString();
+        document.getElementById('copy-hint').textContent = `Created: ${dateStr}`;
+        
+        resultEl.style.display = 'block';
+        urlInput.value = '';
+        
+        currentPage = 1;
+        if (document.getElementById('main-view').style.display !== 'none') {
+          loadLinks();
+        }
+      } catch (err) {
+        errorEl.textContent = 'Network error. Please try again.';
+        errorEl.style.display = 'block';
+      }
+    }
+
+    async function loadLinks() {
+      const container = document.getElementById('links-table');
+      const offset = (currentPage - 1) * limit;
+      
+      try {
+        const res = await fetch(`/links?limit=${limit}&offset=${offset}`);
+        const data = await res.json();
+        totalItems = data.total;
+
+        if (totalItems === 0) {
+          container.innerHTML = '<div class="empty-state">No links yet. Create one above!</div>';
+          return;
+        }
+
+        const rows = data.items.map(item => `
+          <tr>
+            <td class="td-code"><a href="/${item.short_code}" target="_blank">${item.short_code}</a></td>
+            <td class="td-url">
+              <a href="${item.original_url}" target="_blank" class="truncate" title="${item.original_url}">
+                ${item.original_url}
+              </a>
+            </td>
+            <td><a class="action-link" onclick="showStatsView('${item.short_code}')">View Stats</a></td>
+          </tr>`).join('');
+
+        const totalPages = Math.max(1, Math.ceil(totalItems / limit));
+
+        container.innerHTML = `
+          <table>
+            <thead><tr><th>Short Code</th><th>Original URL</th><th>Analytics</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+            <div style="color: var(--text-muted); font-size: 0.875rem;">
+              Showing ${offset + 1} - ${Math.min(offset + limit, totalItems)} of ${totalItems} links
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button class="pagination-btn" id="prev-btn" onclick="prevPage()" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>
+              <span style="color: var(--text-muted); font-size: 0.875rem; min-width: 80px; text-align: center;">Page ${currentPage} of ${totalPages}</span>
+              <button class="pagination-btn" id="next-btn" onclick="nextPage()" ${currentPage >= totalPages ? 'disabled' : ''}>Next</button>
+            </div>
+          </div>`;
+      } catch (err) {
+        container.innerHTML = '<div class="empty-state">Failed to load links.</div>';
+      }
+    }
+
+    function prevPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        loadLinks();
+      }
+    }
+
+    function nextPage() {
+      const totalPages = Math.ceil(totalItems / limit);
+      if (currentPage < totalPages) {
+        currentPage++;
+        loadLinks();
+      }
+    }
+
+    function exportCSV() {
+      window.location.href = '/links/export';
+    }
+
+    async function loadStats(code) {
+      const errorEl = document.getElementById('stats-error');
+      const contentEl = document.getElementById('stats-content');
+      
+      errorEl.style.display = 'none';
+      contentEl.style.opacity = '0.5';
+
+      try {
+        const res = await fetch(`/links/${code}/stats`);
+        
+        if (!res.ok) {
+          contentEl.style.display = 'none';
+          errorEl.textContent = res.status === 404 ? 'Link not found.' : 'Error loading stats.';
+          errorEl.style.display = 'block';
+          contentEl.style.opacity = '1';
+          return;
+        }
+
+        const data = await res.json();
+        
+        contentEl.style.display = 'block';
+        document.getElementById('stats-clicks').textContent = data.click_count.toLocaleString();
+        
+        const shortUrl = `${location.origin}/${data.short_code}`;
+        const shortEl = document.getElementById('stats-short');
+        shortEl.href = shortUrl;
+        shortEl.textContent = shortUrl;
+        
+        const origEl = document.getElementById('stats-original');
+        origEl.href = data.original_url;
+        origEl.textContent = data.original_url;
+        
+        document.getElementById('stats-date').textContent = new Date(data.created_at).toLocaleString();
+        
+        contentEl.style.opacity = '1';
+      } catch (err) {
+        contentEl.style.display = 'none';
+        errorEl.textContent = 'Network error loading stats.';
+        errorEl.style.display = 'block';
+        contentEl.style.opacity = '1';
+      }
+    }
+
+    function refreshStats() {
+      if (currentStatsCode) {
+        loadStats(currentStatsCode);
+      }
+    }
+
+    document.getElementById('url-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') shorten();
+    });
+
+    handleRouting();
+  </script>
+</body>
+</html>
