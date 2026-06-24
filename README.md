@@ -6,7 +6,9 @@ A simple URL shortener REST API built with FastAPI, SQLAlchemy, and SQLite.
 
 ### Local
 
+**Note:** For a real deployment, you must override the default `JWT_SECRET` by setting the environment variable.
 ```bash
+export JWT_SECRET="your-super-secret-key"
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -31,10 +33,28 @@ pytest tests/ -v
 
 ## API endpoints
 
-### Create a short link
+### Register User
+
+```bash
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "myuser", "password": "mypassword"}'
+```
+
+### Login
+
+```bash
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "myuser", "password": "mypassword"}'
+```
+Returns an `access_token` to be used as a Bearer token in authenticated requests.
+
+### Create a short link (Auth Required)
 
 ```bash
 curl -X POST http://localhost:8000/links \
+  -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{"url": "https://example.com/some/long/path"}'
 ```
@@ -72,10 +92,11 @@ Response (200):
 }
 ```
 
-### List all links (paginated)
+### List all links (Auth Required, Paginated)
 
 ```bash
-curl "http://localhost:8000/links?limit=10&offset=0"
+curl "http://localhost:8000/links?limit=10&offset=0" \
+  -H "Authorization: Bearer <token>"
 ```
 
 Response (200):
@@ -92,10 +113,10 @@ Response (200):
 }
 ```
 
-### Export stats as CSV
+### Export stats as CSV (Auth Required)
 
 ```bash
-curl -o stats.csv http://localhost:8000/links/export
+curl -o stats.csv -H "Authorization: Bearer <token>" http://localhost:8000/links/export
 ```
 
 Downloads a CSV file with columns `Short Code`, `Original URL`, `Created At`, `Click Count` for every link in the database, ordered newest first.
@@ -110,6 +131,8 @@ A lightweight single-page interface is served at `http://localhost:8000`. It let
 
 
 ## Decisions
+
+**Public Redirects & Stats.** While link creation and listing are gated by user ownership, the redirect (`GET /{code}`) and stats (`GET /links/{code}/stats`) endpoints remain public. This ensures anyone with a shortened link can use it without needing an account, and stats are freely verifiable, while preventing unauthorized spam creation or bulk data scraping of a user's links.
 
 **Base62 random codes over auto-increment IDs.** Auto-increment IDs are sequential and
 predictable -- users could enumerate all shortened links. Random base62 codes (62^7 ~ 3.5
